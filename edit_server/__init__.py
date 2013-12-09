@@ -172,7 +172,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def _get_editor(self, contents, headers):
         logging.debug("EDITORS: %r" % (EDITORS,))
-        filename = self.headers.getheader("x-file")
+        filename = self.headers.get("x-file")
         if filename in ('undefined', 'null'): filename = None # that's not very pythonic, is it chaps?
         editor = None
 
@@ -202,7 +202,7 @@ class Handler(BaseHTTPRequestHandler):
         if editor.still_open:
             self.send_header('x-file', editor.filename)
         self.end_headers()
-        self.wfile.write(contents)
+        self.wfile.write(contents.encode('utf-8'))
 
     def _delayed_remove(self, filename):
         def delayed_remove():
@@ -220,9 +220,9 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         try:
             logging.info(" --- new request --- ")
-            logging.debug("Headers:\n%s", "   ".join(self.headers.headers))
+            logging.debug("Headers:\n%s", self.headers)
             logging.debug("there are %s active editors" % (len(EDITORS),))
-            content_length = self.headers.getheader('content-length')
+            content_length = self.headers.get('content-length')
             if content_length is None:
                 self.send_response(411)
                 self.end_headers()
