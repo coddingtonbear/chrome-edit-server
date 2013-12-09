@@ -235,9 +235,9 @@ class Handler(BaseHTTPRequestHandler):
             self._respond(contents=contents, editor=editor)
             if editor.finished:
                 self._delayed_remove(editor.filename)
-        except HttpError, e:
+        except HttpError as e:
             self.send_error(*e.args)
-        except Exception, e:
+        except Exception as e:
             logging.exception("%s: %s" % (type(e).__name__, e,))
             self.send_error(404, "Not Found: %s" % self.path)
         logging.debug("POST complete")
