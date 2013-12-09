@@ -16,8 +16,8 @@
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 
-from __future__ import absolute_import, print_function
-import cgi, urlparse
+
+import cgi, urllib.parse
 import subprocess
 import tempfile, time
 import os, sys, re
@@ -25,11 +25,10 @@ import stat
 import shlex
 import socket
 from optparse import OptionParser
-from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-from SocketServer import ThreadingMixIn
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from socketserver import ThreadingMixIn
 import threading
 import logging
-import time
 
 logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s [%(threadName)s@%(asctime)s]")
 
@@ -164,11 +163,11 @@ class Filters(object):
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/status':
-                self.send_response(200)
-                self.send_header('Content-Type', 'text/plain; charset=utf-8')
-                self.end_headers()
-                self.wfile.write('edit-server is running.\n')
-                return
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/plain; charset=utf-8')
+            self.end_headers()
+            self.wfile.write('edit-server is running.\n')
+            return
         self.send_error(404, "GET Not Found: %s" % self.path)
 
     def _get_editor(self, contents, headers):
