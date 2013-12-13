@@ -25,8 +25,8 @@ class TestInteraction(unittest.TestCase):
         Run edit server
         """
         os.environ['EDIT_SERVER_EDITOR'] = 'cp tests/edited.txt'
-        from edit_server import main
-        main()
+        from subprocess import call
+        call(['./edit-server'])
 
     def test_edit_file(self):
         connection = http.client.HTTPConnection('localhost', 9292)
