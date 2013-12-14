@@ -50,16 +50,10 @@ logging.basicConfig(
     format="%(levelname)s: %(message)s [%(threadName)s@%(asctime)s]"
 )
 
-OPEN_CMD = shlex.split(os.environ.get('EDIT_SERVER_EDITOR', 'gvim -f'),
-                       comments=False)
 os.environ['FROM_EDIT_SERVER'] = 'true'
 
 EDITORS = {}
-INCREMENTAL = True
-DELAY_IN_MINUTES = 5
 SYSTEMD_FIRST_SOCKET_FD = 3
-TEMP_DIR = None
-FILTERS = None
 CAREFUL_FILTERING = True
 
 
@@ -80,6 +74,11 @@ class HttpError(RuntimeError):
 
 
 class Editor(object):
+    INCREMENTAL = True
+    OPEN_CMD = shlex.split(os.environ.get('EDIT_SERVER_EDITOR', 'gvim -f'),
+                           comments=False)
+    TEMP_DIR = None
+
     def __init__(self, contents, filter_=None):
         logging.info("Editor using filter: %r", filter_)
         self.filter = filter_
@@ -104,12 +103,12 @@ class Editor(object):
         file_ = tempfile.NamedTemporaryFile(delete=False,
                                             prefix=self.prefix,
                                             suffix='.txt',
-                                            dir=TEMP_DIR)
+                                            dir=self.TEMP_DIR)
         filename = file_.name
         file_.write(contents)
         file_.close()
         # spawn editor...
-        cmd = OPEN_CMD + [filename]
+        cmd = self.OPEN_CMD + [filename]
         logging.info("Spawning editor: %r", cmd)
         self.process = subprocess.Popen(cmd, close_fds=True)
         self.returncode = None
@@ -150,7 +149,7 @@ class Editor(object):
         def _finish():
             del EDITORS[self.filename]
 
-        if not INCREMENTAL:
+        if not self.INCREMENTAL:
             self.returncode = self.process.wait()
             _finish()
             return
@@ -200,6 +199,9 @@ class Filters(object):
 
 
 class Handler(BaseHTTPRequestHandler):
+    DELAY_IN_MINUTES = 5
+    FILTERS = None
+
     def do_GET(self):
         if self.path == '/status':
             self.send_response(200)
@@ -224,7 +226,7 @@ class Handler(BaseHTTPRequestHandler):
                              "creating new one for filename: %s", filename)
 
         if editor is None:
-            filter_ = FILTERS.get_first(headers, contents)
+            filter_ = self.FILTERS.get_first(headers, contents)
             editor = Editor(contents, filter_)
             EDITORS[editor.filename] = editor
         return editor
@@ -247,8 +249,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def _delayed_remove(self, filename):
         def delayed_remove():
-            logging.debug("sleeping %s mins", DELAY_IN_MINUTES)
-            time.sleep(DELAY_IN_MINUTES * 60)
+            logging.debug("sleeping %s mins", self.DELAY_IN_MINUTES)
+            time.sleep(self.DELAY_IN_MINUTES * 60)
             logging.debug("removing file: %s", filename,)
             try:
                 os.unlink(filename)
@@ -305,7 +307,6 @@ class SocketInheritingHTTPServer(ThreadedHTTPServer):
 
 
 def main():
-    global DELAY_IN_MINUTES, INCREMENTAL, OPEN_CMD, TEMP_DIR, FILTERS
     try:
         parser = OptionParser("usage: %prog [OPTIONS] <edit-cmd>")
         parser.add_option("-p", "--port", default=9292, type="int")
@@ -333,15 +334,15 @@ def main():
             action='store_false')
         opts, args = parser.parse_args()
         port = opts.port
-        DELAY_IN_MINUTES = opts.delay
-        INCREMENTAL = opts.incremental
-        TEMP_DIR = opts.tempdir
-        FILTERS = Filters()
+        Handler.DELAY_IN_MINUTES = opts.delay
+        Editor.INCREMENTAL = opts.incremental
+        Editor.TEMP_DIR = opts.tempdir
+        Handler.FILTERS = Filters()
         if opts.use_filters:
-            FILTERS.load()
+            Handler.FILTERS.load()
 
         if args:
-            OPEN_CMD = args
+            Editor.OPEN_CMD = args
 
         logging.info('edit-server PID is %s', os.getpid())
         server_args = [('localhost', int(port)), Handler]
