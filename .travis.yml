@@ -4,7 +4,8 @@ python:
         - "3.3"
 
 install:
-        pip install pep8 pylint
+        - pip install html2text
+        - pip install pep8 pylint
 
 script:
         - pep8 .
