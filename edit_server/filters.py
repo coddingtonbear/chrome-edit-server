@@ -108,8 +108,8 @@ class GmailCodec(object):
         content = cgi.escape(content)
         content = content.replace('_!!&lt;', '<').replace('_!!&gt;', '>')
 
-        def encode_spaces(s):
-            extra_spaces = len(s.group(0)) - 1
+        def encode_spaces(string):
+            extra_spaces = len(string.group(0)) - 1
             nbsp = '&nbsp;'
             return (nbsp * extra_spaces) + ' '
 
