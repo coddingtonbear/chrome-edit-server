@@ -17,16 +17,29 @@
 #
 
 
-import cgi, urllib.parse
+import cgi
+try:
+    import urllib.parse
+except ImportError:
+    import urlparse
 import subprocess
-import tempfile, time
-import os, sys, re
+import tempfile
+import time
+import os
+import sys
+import re
 import stat
 import shlex
 import socket
 from optparse import OptionParser
-from http.server import BaseHTTPRequestHandler, HTTPServer
-from socketserver import ThreadingMixIn
+try:
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+except ImportError:
+    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+try:
+    from socketserver import ThreadingMixIn
+except ImportError:
+    from SocketServer import ThreadingMixIn
 import threading
 import logging
 
