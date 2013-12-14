@@ -2,5 +2,12 @@ language: python
 python:
         - "2.7"
         - "3.3"
+
+install:
+        - pip install html2text
+        - pip install pep8 pylint
+
 script:
+        - pep8 .
+        - pylint edit_server
         - python -m unittest discover
