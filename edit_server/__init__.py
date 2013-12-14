@@ -19,7 +19,7 @@
 
 import cgi
 try:
-    import urllib.parse
+    import urllib.parse  # pylint:disable=import-error,no-name-in-module
 except ImportError:
     import urlparse  # pylint:disable=import-error
 import subprocess
@@ -33,14 +33,16 @@ import shlex
 import socket
 from optparse import OptionParser
 try:
+    # pylint:disable=import-error
     from http.server import BaseHTTPRequestHandler, HTTPServer
 except ImportError:
-      # pylint:disable=import-error
+    # pylint:disable=import-error
     from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 try:
+    # pylint:disable=import-error
     from socketserver import ThreadingMixIn
 except ImportError:
-      # pylint:disable=import-error
+    # pylint:disable=import-error
     from SocketServer import ThreadingMixIn
 import threading
 import logging

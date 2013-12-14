@@ -1,4 +1,9 @@
-from urllib.parse import urlparse
+try:
+    # pylint:disable=import-error,no-name-in-module
+    from urllib.parse import urlparse
+except ImportError:
+    # pylint:disable=import-error
+    from urlparse import urlparse
 import logging
 import html2text
 import re
