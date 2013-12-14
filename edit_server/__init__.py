@@ -282,7 +282,7 @@ class Handler(BaseHTTPRequestHandler):
         except HttpError as ex:
             self.send_error(*ex.args)
         except Exception:
-            logging.exception("Unhandled exception", exc_info=True)
+            logging.exception("Unhandled exception")
             self.send_error(404, "Not Found: %s" % self.path)
         logging.debug("POST complete")
 
