@@ -156,7 +156,7 @@ class Editor(object):
             _finish()
             return
         last_mod_time = os.stat(self.filename)[stat.ST_MTIME]
-        while (True):
+        while True:
             time.sleep(1)
             self.returncode = self.process.poll()
             if self.finished:
