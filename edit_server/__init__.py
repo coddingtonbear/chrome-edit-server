@@ -15,19 +15,10 @@
 # along with this program; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-
-
-import cgi
-try:
-    import urllib.parse  # pylint:disable=import-error,no-name-in-module
-except ImportError:
-    import urlparse  # pylint:disable=import-error
 import subprocess
 import tempfile
 import time
 import os
-import sys
-import re
 import stat
 import shlex
 import socket
