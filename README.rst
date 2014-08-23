@@ -4,6 +4,12 @@ Chrome Edit Server
 .. image:: https://travis-ci.org/coddingtonbear/chrome-edit-server.svg?branch=master
     :target: https://travis-ci.org/coddingtonbear/chrome-edit-server
 
+.. image:: https://badge.fury.io/py/chrome-edit-server.png
+    :target: http://badge.fury.io/py/chrome-edit-server
+
+.. image:: https://pypip.in/d/chrome-edit-server/badge.png
+    :target: https://pypi.python.org/pypi/chrome-edit-server
+
 This application is an "edit server" supporting one of the many Chrome plugins
 (including `TextAid <https://chrome.google.com/webstore/detail/textaid/ppoadiihggafnhokfkpphojggcdigllp>`_
 and `Edit with Emacs <https://chrome.google.com/webstore/detail/edit-with-emacs/ljobjlafonikaiipfkggjbhkghgicgoh>`_)
