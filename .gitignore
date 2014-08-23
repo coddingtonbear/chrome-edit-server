@@ -1,3 +1,5 @@
+*.pyc
+__pycache__
 0inst
 dist/*
 *egg-info*

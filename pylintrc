@@ -1,0 +1,23 @@
+[MASTER]
+
+[MESSAGES CONTROL]
+
+disable=
+	attribute-defined-outside-init,
+	broad-except,
+	locally-disabled,
+	missing-docstring,
+	no-self-use,
+	super-on-old-class,
+	star-args,
+	too-few-public-methods,
+	too-many-public-methods,
+
+[REPORTS]
+
+include-ids=no
+symbols=yes
+
+[BASIC]
+
+method-rgx=([a-z_][a-z0-9_]{2,30})|(do_[A-Z_]+)$
