@@ -10,3 +10,4 @@ src/*
 man/*
 *.egg
 .Python
+.tox
