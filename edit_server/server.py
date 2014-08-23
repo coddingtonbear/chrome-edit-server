@@ -40,7 +40,6 @@ import logging
 os.environ['FROM_EDIT_SERVER'] = 'true'
 
 EDITORS = {}
-SYSTEMD_FIRST_SOCKET_FD = 3
 CAREFUL_FILTERING = True
 
 

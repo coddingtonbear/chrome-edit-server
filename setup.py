@@ -23,7 +23,7 @@ setup(
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'chrome_edit_server = edit_server.server:main'
+            'chrome_edit_server = edit_server.cmdline:main'
         ],
     }
 )
