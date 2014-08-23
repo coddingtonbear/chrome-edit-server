@@ -3,8 +3,12 @@ try:
 except ImportError:
     from httplib import HTTPConnection, OK
 import os
-import multiprocessing
+import subprocess
+import time
 import unittest
+
+
+TESTING_PORT = 49292
 
 
 class TestInteraction(unittest.TestCase):
@@ -12,27 +16,32 @@ class TestInteraction(unittest.TestCase):
         """
         Start the edit server process.
         """
-        self.server = multiprocessing.Process(target=self.run_server)
-        self.server.start()
-        import time
+        self.server = self.run_server()
+        # Wait for a moment just to make sure the server is up before
+        # we begin testing.
         time.sleep(1)
 
     def tearDown(self):
         """
         Terminate the edit server process.
         """
-        self.server.terminate()
+        self.server.kill()
 
     def run_server(self):
         """
         Run edit server
         """
         os.environ['EDIT_SERVER_EDITOR'] = 'cp tests/edited.txt'
-        edit_server = './edit-server'
-        os.execl(edit_server, edit_server)
+        proc = subprocess.Popen(
+            [
+                'chrome_edit_server',
+                '--port=%s' % TESTING_PORT,
+            ],
+        )
+        return proc
 
     def test_edit_file(self):
-        connection = HTTPConnection('localhost', 9292)
+        connection = HTTPConnection('localhost', TESTING_PORT)
         connection.request('POST', '/', "Original text\n")
         response = connection.getresponse()
 
