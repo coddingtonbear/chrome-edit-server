@@ -1,1 +1,3 @@
 0inst
+dist/*
+*egg-info*
