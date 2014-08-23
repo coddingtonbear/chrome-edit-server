@@ -15,12 +15,8 @@
 # along with this program; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
-import subprocess
-import tempfile
 import time
 import os
-import stat
-import shlex
 import socket
 try:
     # pylint:disable=import-error
@@ -37,158 +33,16 @@ except ImportError:
 import threading
 import logging
 
-os.environ['FROM_EDIT_SERVER'] = 'true'
+from .editor import Editor, EDITORS
 
-EDITORS = {}
-CAREFUL_FILTERING = True
+os.environ['FROM_EDIT_SERVER'] = 'true'
 
 
 logger = logging.getLogger(__name__)
 
 
-def try_call(callable_, desc, default=None, args=None, kwargs=None):
-    if args is None:
-        args = []
-    if kwargs is None:
-        kwargs = {}
-    try:
-        return callable_(*args, **kwargs)
-    except Exception:
-        logger.error("Failed to %s:", desc, exc_info=True)
-        return default
-
-
 class HttpError(RuntimeError):
     pass
-
-
-class Editor(object):
-    INCREMENTAL = True
-    OPEN_CMD = shlex.split(os.environ.get('EDIT_SERVER_EDITOR', 'gvim -f'),
-                           comments=False)
-    TEMP_DIR = None
-
-    def __init__(self, contents, filter_=None):
-        logger.info("Editor using filter: %r", filter_)
-        self.filter = filter_
-        self.prefix = "chrome_"
-        self._spawn(contents)
-
-    def _spawn(self, contents):
-        if self.filter is not None:
-            try:
-                contents = self.filter.decode(contents)
-            except Exception:
-                self.filter = None
-                logger.error("Failed to decode contents:", exc_info=True)
-            else:
-                if CAREFUL_FILTERING:
-                    derived_contents = self.filter.encode(contents)
-                    re_decoded_contents = self.filter.decode(derived_contents)
-                    assert contents == re_decoded_contents, \
-                        "filter is lossy. decoded:\n%s\n\nre-decoded:\n%s" % (
-                            contents, re_decoded_contents)
-
-        file_ = tempfile.NamedTemporaryFile(delete=False,
-                                            prefix=self.prefix,
-                                            suffix='.txt',
-                                            dir=self.TEMP_DIR)
-        filename = file_.name
-        file_.write(contents)
-        file_.close()
-        # spawn editor...
-        cmd = self.OPEN_CMD + [filename]
-        logger.info("Spawning editor: %r", cmd)
-        self.process = subprocess.Popen(cmd, close_fds=True)
-        self.returncode = None
-        self.filename = filename
-
-    @property
-    def still_open(self):
-        return self.returncode is None
-
-    @property
-    def success(self):
-        return self.still_open or self.returncode == 0
-
-    @property
-    def finished(self):
-        return self.returncode is not None
-
-    @property
-    def error(self):
-        if self.returncode > 0:
-            return 'text editor returned %d' % self.returncode
-        elif self.returncode < 0:
-            return 'text editor died on signal %d' % -(self.returncode)
-
-    @property
-    def contents(self):
-        with open(self.filename, 'r') as file_:
-            contents = file_.read()
-        if self.filter is not None:
-            contents = try_call(
-                self.filter.encode,
-                'encode contents',
-                args=(contents,),
-                default=contents)
-        return contents
-
-    def wait_for_edit(self):
-        def _finish():
-            del EDITORS[self.filename]
-
-        if not self.INCREMENTAL:
-            self.returncode = self.process.wait()
-            _finish()
-            return
-        last_mod_time = os.stat(self.filename)[stat.ST_MTIME]
-        while True:
-            time.sleep(1)
-            self.returncode = self.process.poll()
-            if self.finished:
-                _finish()
-                return
-            mod_time = os.stat(self.filename)[stat.ST_MTIME]
-            if mod_time != last_mod_time:
-                logger.info(
-                    "new mod time: %s, last: %s",
-                    mod_time,
-                    last_mod_time
-                )
-                last_mod_time = mod_time
-                return
-
-
-class Filters(object):
-    def __init__(self):
-        self.filters = []
-
-    def load(self):
-        try:
-            import env_importer  # pylint:disable=import-error
-        except ImportError:
-            logger.warn("env_importer not loaded - filters disabled")
-            return []
-        logger.debug(
-            "Loading filters from spec: %r",
-            os.environ.get('EDIT_SERVER_FILTERS', '')
-        )
-        loader = env_importer.EnvImporter('EDIT_SERVER_FILTERS')
-        self.filters = try_call(loader.load_all,
-                                desc='load filters',
-                                default=[])
-        logger.debug("Loaded filters: %r", self.filters)
-
-    def get_first(self, headers, contents):
-        for filter_ in self.filters:
-            match_result = try_call(filter_.match,
-                                    'check filter match',
-                                    args=(headers, contents))
-            if match_result:
-                # return True to use `self`, otherwise uses the match_result
-                return filter_ if match_result is True else match_result
-        return None
 
 
 class Handler(BaseHTTPRequestHandler):

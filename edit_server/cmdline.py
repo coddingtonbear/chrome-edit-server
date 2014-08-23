@@ -2,9 +2,9 @@ import logging
 from optparse import OptionParser
 import os
 
+from .editor import Editor
+from .filters import Filters
 from .server import (
-    Editor,
-    Filters,
     Handler,
     SocketInheritingHTTPServer,
     ThreadedHTTPServer,

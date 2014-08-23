@@ -6,8 +6,45 @@ except ImportError:
     from urlparse import urlparse
 import logging
 import html2text
+import os
 import re
 import cgi
+
+from .util import try_call
+
+
+logger = logging.getLogger(__name__)
+
+
+class Filters(object):
+    def __init__(self):
+        self.filters = []
+
+    def load(self):
+        try:
+            import env_importer  # pylint:disable=import-error
+        except ImportError:
+            logger.warn("env_importer not loaded - filters disabled")
+            return []
+        logger.debug(
+            "Loading filters from spec: %r",
+            os.environ.get('EDIT_SERVER_FILTERS', '')
+        )
+        loader = env_importer.EnvImporter('EDIT_SERVER_FILTERS')
+        self.filters = try_call(loader.load_all,
+                                desc='load filters',
+                                default=[])
+        logger.debug("Loaded filters: %r", self.filters)
+
+    def get_first(self, headers, contents):
+        for filter_ in self.filters:
+            match_result = try_call(filter_.match,
+                                    'check filter match',
+                                    args=(headers, contents))
+            if match_result:
+                # return True to use `self`, otherwise uses the match_result
+                return filter_ if match_result is True else match_result
+        return None
 
 
 class GmailFilter(object):
