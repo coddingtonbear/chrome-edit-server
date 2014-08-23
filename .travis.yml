@@ -1,13 +1,12 @@
 language: python
 python:
-        - "2.7"
-        - "3.3"
-
-install:
-        - pip install html2text
-        - pip install pep8 pylint
-
-script:
-        - pep8 .
-        - pylint edit_server
-        - python -m unittest discover
+  - 2.6
+  - 2.7
+  - 3.3
+before_install:
+  - pip install -r requirements.txt
+  - pip install pytest mock pretend freezegun
+  - pip install -e .
+  - git config --global user.email "gitbot@adamcoddington.net"
+  - git config --global user.name "I'm a Robot"
+script: py.test
