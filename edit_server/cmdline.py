@@ -18,6 +18,8 @@ SYSTEMD_FIRST_SOCKET_FD = 3
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
+
     try:
         parser = OptionParser("usage: %prog [OPTIONS] <edit-cmd>")
         parser.add_option("-p", "--port", default=9292, type="int")
