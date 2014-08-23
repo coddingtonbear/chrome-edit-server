@@ -3,3 +3,9 @@ __pycache__
 0inst
 dist/*
 *egg-info*
+bin/*
+include/*
+lib/*
+src/*
+man/*
+.Python
