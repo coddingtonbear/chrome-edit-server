@@ -93,10 +93,7 @@ class GmailCodec(object):
         for before, after in replacement_pairs:
             if not before:
                 continue
-            # self.logger.debug("** Replacing %r -> %r", before, after)
-            # self.logger.debug("Before:\n%s", content)
             content = content.replace(before, after)
-            # self.logger.debug("After:\n%s", content)
         return content
 
     def decode(self, content):
