@@ -43,6 +43,9 @@ EDITORS = {}
 CAREFUL_FILTERING = True
 
 
+logger = logging.getLogger(__name__)
+
+
 def try_call(callable_, desc, default=None, args=None, kwargs=None):
     if args is None:
         args = []
@@ -51,7 +54,7 @@ def try_call(callable_, desc, default=None, args=None, kwargs=None):
     try:
         return callable_(*args, **kwargs)
     except Exception:
-        logging.error("Failed to %s:", desc, exc_info=True)
+        logger.error("Failed to %s:", desc, exc_info=True)
         return default
 
 
@@ -66,7 +69,7 @@ class Editor(object):
     TEMP_DIR = None
 
     def __init__(self, contents, filter_=None):
-        logging.info("Editor using filter: %r", filter_)
+        logger.info("Editor using filter: %r", filter_)
         self.filter = filter_
         self.prefix = "chrome_"
         self._spawn(contents)
@@ -77,7 +80,7 @@ class Editor(object):
                 contents = self.filter.decode(contents)
             except Exception:
                 self.filter = None
-                logging.error("Failed to decode contents:", exc_info=True)
+                logger.error("Failed to decode contents:", exc_info=True)
             else:
                 if CAREFUL_FILTERING:
                     derived_contents = self.filter.encode(contents)
@@ -95,7 +98,7 @@ class Editor(object):
         file_.close()
         # spawn editor...
         cmd = self.OPEN_CMD + [filename]
-        logging.info("Spawning editor: %r", cmd)
+        logger.info("Spawning editor: %r", cmd)
         self.process = subprocess.Popen(cmd, close_fds=True)
         self.returncode = None
         self.filename = filename
@@ -148,9 +151,11 @@ class Editor(object):
                 return
             mod_time = os.stat(self.filename)[stat.ST_MTIME]
             if mod_time != last_mod_time:
-                logging.info("new mod time: %s, last: %s",
-                             mod_time,
-                             last_mod_time)
+                logger.info(
+                    "new mod time: %s, last: %s",
+                    mod_time,
+                    last_mod_time
+                )
                 last_mod_time = mod_time
                 return
 
@@ -163,15 +168,17 @@ class Filters(object):
         try:
             import env_importer  # pylint:disable=import-error
         except ImportError:
-            logging.warn("env_importer not loaded - filters disabled")
+            logger.warn("env_importer not loaded - filters disabled")
             return []
-        logging.debug("Loading filters from spec: %r",
-                      os.environ.get('EDIT_SERVER_FILTERS', ''))
+        logger.debug(
+            "Loading filters from spec: %r",
+            os.environ.get('EDIT_SERVER_FILTERS', '')
+        )
         loader = env_importer.EnvImporter('EDIT_SERVER_FILTERS')
         self.filters = try_call(loader.load_all,
                                 desc='load filters',
                                 default=[])
-        logging.debug("Loaded filters: %r", self.filters)
+        logger.debug("Loaded filters: %r", self.filters)
 
     def get_first(self, headers, contents):
         for filter_ in self.filters:
@@ -198,18 +205,21 @@ class Handler(BaseHTTPRequestHandler):
         self.send_error(404, "GET Not Found: %s" % self.path)
 
     def _get_editor(self, contents, headers):
-        logging.debug("EDITORS: %r", EDITORS)
+        logger.debug("EDITORS: %r", EDITORS)
         filename = self.headers.get("x-file")
         if filename in ('undefined', 'null'):
             filename = None  # that's not very pythonic, is it chaps?
         editor = None
 
         if filename is not None:
-            logging.debug("reusing editor for file: %s", filename)
+            logger.debug("reusing editor for file: %s", filename)
             editor = EDITORS.get(filename, None)
             if editor is None:
-                logging.warn("Could not find existing editor - "
-                             "creating new one for filename: %s", filename)
+                logger.warn(
+                    "Could not find existing editor - "
+                    "creating new one for filename: %s",
+                    filename
+                )
 
         if editor is None:
             filter_ = self.FILTERS.get_first(headers, contents)
@@ -235,22 +245,22 @@ class Handler(BaseHTTPRequestHandler):
 
     def _delayed_remove(self, filename):
         def delayed_remove():
-            logging.debug("sleeping %s mins", self.DELAY_IN_MINUTES)
+            logger.debug("sleeping %s mins", self.DELAY_IN_MINUTES)
             time.sleep(self.DELAY_IN_MINUTES * 60)
-            logging.debug("removing file: %s", filename,)
+            logger.debug("removing file: %s", filename,)
             try:
                 os.unlink(filename)
             except Exception:
-                logging.error("Unable to unlink: %s", filename)
+                logger.error("Unable to unlink: %s", filename)
         thread = threading.Thread(target=delayed_remove)
         thread.daemon = True
         thread.start()
 
     def do_POST(self):
         try:
-            logging.info(" --- new request --- ")
-            logging.debug("Headers:\n%s", self.headers)
-            logging.debug("there are %s active editors", len(EDITORS))
+            logger.info(" --- new request --- ")
+            logger.debug("Headers:\n%s", self.headers)
+            logger.debug("there are %s active editors", len(EDITORS))
             content_length = self.headers.get('content-length')
             if content_length is None:
                 self.send_response(411)
@@ -266,9 +276,9 @@ class Handler(BaseHTTPRequestHandler):
         except HttpError as ex:
             self.send_error(*ex.args)
         except Exception:
-            logging.exception("Unhandled exception")
+            logger.exception("Unhandled exception")
             self.send_error(404, "Not Found: %s" % self.path)
-        logging.debug("POST complete")
+        logger.debug("POST complete")
 
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
