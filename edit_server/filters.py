@@ -1,14 +1,10 @@
-try:
-    # pylint:disable=import-error,no-name-in-module
-    from urllib.parse import urlparse
-except ImportError:
-    # pylint:disable=import-error
-    from urlparse import urlparse
 import logging
 import html2text
 import os
 import re
 import cgi
+
+from six.moves.urllib.parse import urlparse
 
 from .util import try_call
 

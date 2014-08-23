@@ -18,20 +18,11 @@
 import time
 import os
 import socket
-try:
-    # pylint:disable=import-error
-    from http.server import BaseHTTPRequestHandler, HTTPServer
-except ImportError:
-    # pylint:disable=import-error
-    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-try:
-    # pylint:disable=import-error
-    from socketserver import ThreadingMixIn
-except ImportError:
-    # pylint:disable=import-error
-    from SocketServer import ThreadingMixIn
 import threading
 import logging
+
+from six.moves.BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from six.moves.socketserver import ThreadingMixIn
 
 from .editor import Editor, EDITORS
 
