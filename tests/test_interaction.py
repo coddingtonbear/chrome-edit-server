@@ -2,8 +2,7 @@ try:
     from http.client import HTTPConnection, OK
 except ImportError:
     from httplib import HTTPConnection, OK
-import os
-import subprocess
+import multiprocessing
 import time
 import unittest
 
@@ -16,7 +15,8 @@ class TestInteraction(unittest.TestCase):
         """
         Start the edit server process.
         """
-        self.server = self.run_server()
+        self.server = multiprocessing.Process(target=self.run_server)
+        self.server.start()
         # Wait for a moment just to make sure the server is up before
         # we begin testing.
         time.sleep(1)
@@ -25,20 +25,19 @@ class TestInteraction(unittest.TestCase):
         """
         Terminate the edit server process.
         """
-        self.server.kill()
+        self.server.terminate()
 
     def run_server(self):
         """
         Run edit server
         """
-        os.environ['EDIT_SERVER_EDITOR'] = 'cp tests/edited.txt'
-        proc = subprocess.Popen(
+        from edit_server.cmdline import main
+        main(
             [
-                'chrome_edit_server',
                 '--port=%s' % TESTING_PORT,
-            ],
+                'cp', 'tests/edited.txt',
+            ]
         )
-        return proc
 
     def test_edit_file(self):
         connection = HTTPConnection('localhost', TESTING_PORT)

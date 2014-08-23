@@ -1,6 +1,7 @@
 import logging
 from optparse import OptionParser
 import os
+import sys
 
 from .editor import Editor
 from .filters import Filters
@@ -17,7 +18,10 @@ logger = logging.getLogger(__name__)
 SYSTEMD_FIRST_SOCKET_FD = 3
 
 
-def main():
+def main(args=None):
+    if args is None:
+        args = sys.argv
+
     logging.basicConfig(level=logging.INFO)
 
     try:
@@ -45,7 +49,7 @@ def main():
             default=True,
             dest='use_filters',
             action='store_false')
-        opts, args = parser.parse_args()
+        opts, args = parser.parse_args(args)
         port = opts.port
         Handler.DELAY_IN_MINUTES = opts.delay
         Editor.INCREMENTAL = opts.incremental

@@ -8,6 +8,7 @@ include/*
 lib/*
 src/*
 man/*
+share/*
 *.egg
 .Python
 .tox
