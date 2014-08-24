@@ -23,66 +23,77 @@ def main(args=None):
     if args is None:
         args = sys.argv
 
-    logging.basicConfig(level=logging.INFO)
+    parser = OptionParser("usage: %prog [OPTIONS] <edit-cmd>")
+    parser.add_option(
+        "-p",
+        "--port",
+        default=settings.PORT,
+        help=(
+            "port on which edit server will listen "
+            "for incoming connections"
+        ),
+        type="int"
+    )
+    parser.add_option(
+        "-d",
+        "--delay",
+        help="delay (in minutes) before deleting unused files",
+        default=settings.DELETE_DELAY
+    )
+    parser.add_option(
+        "--tempdir",
+        help=(
+            "location of temporary files "
+            "(defaults to /tmp, or $EDIT_SERVER_TEMP if defined)"
+        ),
+        default=settings.TEMP_FOLDER,
+    )
+    parser.add_option(
+        "--no-incremental",
+        help=(
+            "disable incremental edits "
+            "(a request will block until editor is finished)"
+        ),
+        default=settings.INCREMENTAL_ENABLED,
+        dest='incremental',
+        action='store_false'
+    )
+    parser.add_option(
+        "--no-filters",
+        help=(
+            "disable context-specific filters "
+            "(e.g gmail compose filter)"
+        ),
+        default=settings.FILTERS_ENABLED,
+        dest='use_filters',
+        action='store_false'
+    )
+    parser.add_option(
+        "--loglevel",
+        help=(
+            "Logging verbosity level; set to 'DEBUG' to see "
+            "all logging messages"
+        ),
+        default='INFO',
+    )
+    opts, args = parser.parse_args(args)
+
+    logging.basicConfig(
+        level=logging.getLevelName(opts.loglevel)
+    )
+
+    port = opts.port
+    Handler.DELAY_IN_MINUTES = opts.delay
+    Editor.INCREMENTAL = opts.incremental
+    Editor.TEMP_DIR = opts.tempdir
+    Handler.FILTERS = Filters()
+    if opts.use_filters:
+        Handler.FILTERS.load()
+
+    if args:
+        Editor.OPEN_CMD = args
 
     try:
-        parser = OptionParser("usage: %prog [OPTIONS] <edit-cmd>")
-        parser.add_option(
-            "-p",
-            "--port",
-            default=settings.PORT,
-            help=(
-                "port on which edit server will listen "
-                "for incoming connections"
-            ),
-            type="int"
-        )
-        parser.add_option(
-            "-d",
-            "--delay",
-            help="delay (in minutes) before deleting unused files",
-            default=settings.DELETE_DELAY
-        )
-        parser.add_option(
-            "--tempdir",
-            help=(
-                "location of temporary files "
-                "(defaults to /tmp, or $EDIT_SERVER_TEMP if defined)"
-            ),
-            default=settings.TEMP_FOLDER,
-        )
-        parser.add_option(
-            "--no-incremental",
-            help=(
-                "disable incremental edits "
-                "(a request will block until editor is finished)"
-            ),
-            default=settings.INCREMENTAL_ENABLED,
-            dest='incremental',
-            action='store_false'
-        )
-        parser.add_option(
-            "--no-filters",
-            help=(
-                "disable context-specific filters "
-                "(e.g gmail compose filter)"
-            ),
-            default=settings.FILTERS_ENABLED,
-            dest='use_filters',
-            action='store_false'
-        )
-        opts, args = parser.parse_args(args)
-        port = opts.port
-        Handler.DELAY_IN_MINUTES = opts.delay
-        Editor.INCREMENTAL = opts.incremental
-        Editor.TEMP_DIR = opts.tempdir
-        Handler.FILTERS = Filters()
-        if opts.use_filters:
-            Handler.FILTERS.load()
-
-        if args:
-            Editor.OPEN_CMD = args
-
         logger.info('edit-server PID is %s', os.getpid())
         server_args = [('localhost', int(port)), Handler]
         if os.environ.get('LISTEN_PID', None) == str(os.getpid()):
