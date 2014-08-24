@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 EDITORS = {}
-CAREFUL_FILTERING = True
 
 
 class Editor(object):
@@ -34,27 +33,21 @@ class Editor(object):
             except Exception:
                 self.filter = None
                 logger.error("Failed to decode contents:", exc_info=True)
-            else:
-                if CAREFUL_FILTERING:
-                    derived_contents = self.filter.encode(contents)
-                    re_decoded_contents = self.filter.decode(derived_contents)
-                    assert contents == re_decoded_contents, \
-                        "filter is lossy. decoded:\n%s\n\nre-decoded:\n%s" % (
-                            contents, re_decoded_contents)
 
-        file_ = tempfile.NamedTemporaryFile(delete=False,
-                                            prefix=self.prefix,
-                                            suffix='.txt',
-                                            dir=self.TEMP_DIR)
-        filename = file_.name
-        file_.write(contents)
-        file_.close()
+        with tempfile.NamedTemporaryFile(
+            delete=False,
+            prefix=self.prefix,
+            suffix='.txt',
+            dir=self.TEMP_DIR
+        ) as temp:
+            temp.write(contents)
+            self.filename = temp.name
+
         # spawn editor...
-        cmd = self.OPEN_CMD + [filename]
+        cmd = self.OPEN_CMD + [temp.name]
         logger.info("Spawning editor: %r", cmd)
         self.process = subprocess.Popen(cmd, close_fds=True)
         self.returncode = None
-        self.filename = filename
 
     @property
     def still_open(self):
@@ -84,7 +77,8 @@ class Editor(object):
                 self.filter.encode,
                 'encode contents',
                 args=(contents,),
-                default=contents)
+                default=contents
+            )
         return contents
 
     def wait_for_edit(self):
@@ -104,8 +98,8 @@ class Editor(object):
                 return
             mod_time = os.stat(self.filename)[stat.ST_MTIME]
             if mod_time != last_mod_time:
-                logger.info(
-                    "new mod time: %s, last: %s",
+                logger.debug(
+                    "New mod time: %s, last: %s",
                     mod_time,
                     last_mod_time
                 )

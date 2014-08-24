@@ -57,10 +57,10 @@ class Handler(BaseHTTPRequestHandler):
         editor = None
 
         if filename is not None:
-            logger.debug("reusing editor for file: %s", filename)
+            logger.debug("Reusing editor for file: %s", filename)
             editor = EDITORS.get(filename, None)
             if editor is None:
-                logger.warn(
+                logger.warning(
                     "Could not find existing editor - "
                     "creating new one for filename: %s",
                     filename
@@ -90,9 +90,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def _delayed_remove(self, filename):
         def delayed_remove():
-            logger.debug("sleeping %s mins", self.DELAY_IN_MINUTES)
+            logger.debug("Sleeping %s mins", self.DELAY_IN_MINUTES)
             time.sleep(self.DELAY_IN_MINUTES * 60)
-            logger.debug("removing file: %s", filename,)
+            logger.debug("Removing file: %s", filename,)
             try:
                 os.unlink(filename)
             except Exception:
@@ -103,9 +103,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         try:
-            logger.info(" --- new request --- ")
-            logger.debug("Headers:\n%s", self.headers)
-            logger.debug("there are %s active editors", len(EDITORS))
+            logger.info("Incoming request: Headers:\n%s", self.headers)
+            logger.debug("There are %s active editors", len(EDITORS))
             content_length = self.headers.get('content-length')
             if content_length is None:
                 self.send_response(411)
