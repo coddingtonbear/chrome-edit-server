@@ -1,10 +1,5 @@
 import logging
-import html2text
-import os
-import re
-import cgi
-
-from six.moves.urllib.parse import urlparse
+import pkg_resources
 
 from .util import try_call
 
@@ -17,137 +12,31 @@ class Filters(object):
         self.filters = []
 
     def load(self):
-        try:
-            import env_importer  # pylint:disable=import-error
-        except ImportError:
-            logger.warn("env_importer not loaded - filters disabled")
-            return []
-        logger.debug(
-            "Loading filters from spec: %r",
-            os.environ.get('EDIT_SERVER_FILTERS', '')
-        )
-        loader = env_importer.EnvImporter('EDIT_SERVER_FILTERS')
-        self.filters = try_call(loader.load_all,
-                                desc='load filters',
-                                default=[])
-        logger.debug("Loaded filters: %r", self.filters)
+        loaded_filters = []
+        for entry_point in (
+            pkg_resources.iter_entry_points(group='chrome_edit_server.plugins')
+        ):
+            try:
+                loaded_filters.append(
+                    entry_point.load()
+                )
+                logger.debug(
+                    "Loaded filter '%s'", entry_point.name
+                )
+            except ImportError:
+                continue
+
+        self.filters = loaded_filters
+        logger.debug("Loaded %s filters.", len(self.filters))
 
     def get_first(self, headers, contents):
         for filter_ in self.filters:
-            match_result = try_call(filter_.match,
-                                    'check filter match',
-                                    args=(headers, contents))
+            match_result = try_call(
+                filter_.match,
+                'check filter match',
+                args=(headers, contents)
+            )
             if match_result:
                 # return True to use `self`, otherwise uses the match_result
                 return filter_ if match_result is True else match_result
         return None
-
-
-class GmailFilter(object):
-    logger = logging.getLogger(__name__ + '.GmailFilter')
-
-    def match(self, headers, contents):
-        url = headers.getheader('x-url', None)
-        if url is None:
-            return
-        url = urlparse(url)
-        self.logger.debug("text is from URL: %s" % (url,))
-        if url.netloc == 'mail.google.com' \
-                and ('<br>' in contents or '<div>' in contents):
-            return GmailCodec()
-
-
-class GmailCodec(object):
-    r'''
-    Converts a (tiny) subset of HTML -> text and back.
-    Empirically this should be enough to edit "plain text"
-    in gmail's new compose window, but it's somewhat fragile.
-
-    >>> c = GmailCodec()
-    >>> content = ("3<div><br></div><div><br></div><div><br></div><div>"
-    ...            "2</div><div><br></div><div><br></div><div>"
-    ...            "1</div><div><br></div><div>"
-    ...            "0</div><div>"
-    ...            "EOF</div>")
-
-    >>> plaintext = c.decode(content)
-    >>> print plaintext
-    3
-    <BLANKLINE>
-    <BLANKLINE>
-    <BLANKLINE>
-    2
-    <BLANKLINE>
-    <BLANKLINE>
-    1
-    <BLANKLINE>
-    0
-    EOF
-    >>> html = c.encode(plaintext)
-    >>> print html
-    3<br><br><br><br>2<br><br><br>1<br><br>0<br>EOF
-
-
-    Also, for entities and preserving of unknown tags:
-
-    >>> print c.encode(c.decode('&lt;<foo x="1">foo!</foo>'))
-    &lt;<foo x="1">foo!</foo>
-
-    Entities:
-
-    >>> print repr(c.decode(" &nbsp;"))
-    '  '
-    >>> print repr(c.encode(c.decode(" &nbsp;")))
-    '&nbsp; '
-
-    Tabs:
-
-    >>> print repr(c.encode('\t'))
-    '&nbsp;&nbsp;&nbsp; '
-
-    Spacing:
-
-    >>> print c.encode('>    1')
-    &gt; &nbsp;&nbsp; 1
-    '''
-
-    logger = logging.getLogger(__name__ + '.GmailCodec')
-    replace_html = [
-        ('<div><br></div>', '\n'),
-        ('<br>', '\n'),
-        ('<div>', '\n'),
-        ('</div>', ''),
-    ]
-    replace_text = [
-        ('\n', '<br>'),
-    ]
-
-    def _replace(self, content, replacement_pairs):
-        for before, after in replacement_pairs:
-            if not before:
-                continue
-            content = content.replace(before, after)
-        return content
-
-    def decode(self, content):
-        content = self._replace(content, self.replace_html)
-        # < and > that are still present need to be distinguishable
-        # from actual entities that get decoded to < and >
-        content = re.sub('(<|>)', r'_!!\1', content)
-        content = html2text.unescape(content)
-        content = content.replace('&nbsp_place_holder;', ' ')
-        return content
-
-    def encode(self, content):
-        content = content.replace("\t", "    ")
-        content = cgi.escape(content)
-        content = content.replace('_!!&lt;', '<').replace('_!!&gt;', '>')
-
-        def encode_spaces(string):
-            extra_spaces = len(string.group(0)) - 1
-            nbsp = '&nbsp;'
-            return (nbsp * extra_spaces) + ' '
-
-        content = re.sub('  +', encode_spaces, content)
-        content = self._replace(content, self.replace_text)
-        return content

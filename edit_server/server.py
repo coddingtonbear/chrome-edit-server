@@ -1,5 +1,5 @@
 # Copyright (C) 2009  David Hilley <davidhi@cc.gatech.edu>,
-# Tim Cuthbertson <gfxmonk.net>
+# Tim Cuthbertson <gfxmonk.net>, Adam Coddington <me@adamcoddington.net>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
