@@ -79,6 +79,14 @@ def main(args=None):
         level=logging.getLevelName(opts.loglevel)
     )
 
+    logger.debug("Starting edit server with options:")
+    for option_name, option_value in vars(opts).items():
+        logger.debug(
+            "    %s = %s",
+            option_name,
+            option_value,
+        )
+
     port = opts.port
     Handler.DELAY_IN_MINUTES = opts.delay
     Editor.INCREMENTAL = opts.incremental
