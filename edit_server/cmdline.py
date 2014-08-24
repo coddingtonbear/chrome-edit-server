@@ -16,9 +16,6 @@ from . import settings
 logger = logging.getLogger(__name__)
 
 
-SYSTEMD_FIRST_SOCKET_FD = 3
-
-
 def main(args=None):
     if args is None:
         args = sys.argv
