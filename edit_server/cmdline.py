@@ -10,6 +10,7 @@ from .server import (
     SocketInheritingHTTPServer,
     ThreadedHTTPServer,
 )
+from . import settings
 
 
 logger = logging.getLogger(__name__)
@@ -26,29 +27,50 @@ def main(args=None):
 
     try:
         parser = OptionParser("usage: %prog [OPTIONS] <edit-cmd>")
-        parser.add_option("-p", "--port", default=9292, type="int")
         parser.add_option(
-            "-d", "--delay",
+            "-p",
+            "--port",
+            default=settings.PORT,
+            help=(
+                "port on which edit server will listen "
+                "for incoming connections"
+            ),
+            type="int"
+        )
+        parser.add_option(
+            "-d",
+            "--delay",
             help="delay (in minutes) before deleting unused files",
-            default=5)
+            default=settings.DELETE_DELAY
+        )
         parser.add_option(
             "--tempdir",
-            default=os.environ.get("EDIT_SERVER_TEMP", None),
-            help="location of temporary files "
-                 "(defaults to /tmp, or $EDIT_SERVER_TEMP if defined)")
+            help=(
+                "location of temporary files "
+                "(defaults to /tmp, or $EDIT_SERVER_TEMP if defined)"
+            ),
+            default=settings.TEMP_FOLDER,
+        )
         parser.add_option(
             "--no-incremental",
-            help="disable incremental edits "
-                 "(a request will block until editor is finished)",
-            default=True,
+            help=(
+                "disable incremental edits "
+                "(a request will block until editor is finished)"
+            ),
+            default=settings.INCREMENTAL_ENABLED,
             dest='incremental',
-            action='store_false')
+            action='store_false'
+        )
         parser.add_option(
             "--no-filters",
-            help="disable context-specific filters (e.g gmail compose filter)",
-            default=True,
+            help=(
+                "disable context-specific filters "
+                "(e.g gmail compose filter)"
+            ),
+            default=settings.FILTERS_ENABLED,
             dest='use_filters',
-            action='store_false')
+            action='store_false'
+        )
         opts, args = parser.parse_args(args)
         port = opts.port
         Handler.DELAY_IN_MINUTES = opts.delay
@@ -66,11 +88,11 @@ def main(args=None):
         if os.environ.get('LISTEN_PID', None) == str(os.getpid()):
             httpserv = SocketInheritingHTTPServer(
                 *server_args,
-                fd=SYSTEMD_FIRST_SOCKET_FD
+                fd=settings.SYSTEMD_FIRST_SOCKET_FD
             )
             logger.info(
                 'edit-server started on socket fd %s',
-                SYSTEMD_FIRST_SOCKET_FD
+                settings.SYSTEMD_FIRST_SOCKET_FD
             )
         else:
             httpserv = ThreadedHTTPServer(*server_args)

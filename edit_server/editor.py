@@ -7,6 +7,7 @@ import tempfile
 import time
 
 from .util import try_call
+from . import settings
 
 
 logger = logging.getLogger(__name__)
@@ -18,8 +19,7 @@ CAREFUL_FILTERING = True
 
 class Editor(object):
     INCREMENTAL = True
-    OPEN_CMD = shlex.split(os.environ.get('EDIT_SERVER_EDITOR', 'gvim -f'),
-                           comments=False)
+    OPEN_CMD = settings.OPEN_CMD
     TEMP_DIR = None
 
     def __init__(self, contents, filter_=None):
