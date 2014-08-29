@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 def main(args=None):
     if args is None:
-        args = sys.argv
+        args = sys.argv[1:]
 
     parser = OptionParser("usage: %prog [OPTIONS] <edit-cmd>")
     parser.add_option(
@@ -95,8 +95,8 @@ def main(args=None):
     if opts.use_filters:
         Handler.FILTERS.load()
 
-    if len(args) > 1:
-        Editor.OPEN_CMD = args[1:]
+    if args:
+        Editor.OPEN_CMD = args
 
     try:
         logger.info('edit-server PID is %s', os.getpid())
