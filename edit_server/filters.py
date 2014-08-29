@@ -18,7 +18,7 @@ class Filters(object):
         ):
             try:
                 loaded_filters.append(
-                    entry_point.load()
+                    entry_point.load()()
                 )
                 logger.debug(
                     "Loaded filter '%s'", entry_point.name

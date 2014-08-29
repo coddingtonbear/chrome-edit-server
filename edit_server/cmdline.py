@@ -95,8 +95,8 @@ def main(args=None):
     if opts.use_filters:
         Handler.FILTERS.load()
 
-    if args:
-        Editor.OPEN_CMD = args
+    if len(args) > 1:
+        Editor.OPEN_CMD = args[1:]
 
     try:
         logger.info('edit-server PID is %s', os.getpid())
