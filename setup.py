@@ -68,6 +68,7 @@ setup(
     cmdclass = {'test': Tox},
     entry_points={
         'console_scripts': [
+            'chrome-edit-server = edit_server.cmdline:main',
             'chrome_edit_server = edit_server.cmdline:main'
         ],
     }

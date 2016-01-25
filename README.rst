@@ -37,9 +37,28 @@ By default, the edit server will run on port 9292, and will use GVim (`gvim -f`)
 as your editor, but you can configure each of those parameters by either setting
 environment variables or providing arguments from the command line.
 
-To see what options are available and how to set them, run::
+To see a brief overview of what settings can be provided from the command-line run::
 
   chrome-edit-server --help
+
+Environment Variables
+~~~~~~~~~~~~~~~~~~~~~
+
+* ``EDIT_SERVER_EDITOR``: Sets the editor command to run when editing a file.  Defaults to ``gvim -f``.  Note that you will want this application to return only once your file edits have been completed! Example settings include:
+
+  * OSX:
+
+    * MacVim: ``open -aW MacVim``
+
+  * Linux:
+
+    * GVim: ``gvim -f`` (default)
+
+* ``EDIT_SERVER_PORT``: Set the port that the edit server will run on.  Defaults to ``9292``.
+* ``EDIT_SERVER_DELETE_DELAY``: Sets the amount of time (in minutes) to wait before deleting created temporary files.  Defaults to ``5``.
+* ``EDIT_SERVER_TEMP``: Sets the path to where temporary files should be stored.  Defaults to your system's temporary files directory.
+* ``EDIT_SERVER_INCREMENTAL``: Sets whether incremental editing will be enabled; your chrome editor plugin must support this feature for it to have an effect. By default this is turned on.
+* ``EDIT_SERVER_USE_FILTERS``: Sets whether filters are enabled.  By default this is turned on.
 
 Contributors
 ------------
