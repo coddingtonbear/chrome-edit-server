@@ -48,7 +48,7 @@ Environment Variables
 
   * OSX:
 
-    * MacVim: ``open -aW MacVim``
+    * MacVim: ``open -Wa MacVim``
 
   * Linux:
 
